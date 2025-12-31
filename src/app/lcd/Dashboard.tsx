@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Search, Download, Plus, Save, ArrowLeft, Trash2, FileUp, X, Check } from 'lucide-react';
+import { Search, Download, Plus, Save, ArrowLeft, Trash2, FileUp, X, Check, LogOut } from 'lucide-react';
 import { ScreenData } from '@/lib/db';
 import { updateScreens, addScreen } from '@/lib/actions';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import { useAuth } from '@/context/AuthContext';
 
 // Declaration for jspdf-autotable
 declare module 'jspdf' {
@@ -18,12 +19,15 @@ declare module 'jspdf' {
 }
 
 export default function Dashboard({ initialData }: { initialData: ScreenData[] }) {
+    const { logout, user } = useAuth();
     const [data, setData] = useState<ScreenData[]>(initialData);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
     const [isAdding, setIsAdding] = useState(false);
     const [newItem, setNewItem] = useState<ScreenData>({ Marca: '', Modelo_LCD: '', Precio: 0 });
     const [isSaving, setIsSaving] = useState(false);
+
+    if (!user) return null;
 
     // Import states
     const [importPreview, setImportPreview] = useState<ScreenData[] | null>(null);
@@ -276,6 +280,9 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                     </button>
                     <button onClick={() => setIsAdding(true)} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Plus size={20} /> Nuevo
+                    </button>
+                    <button onClick={logout} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ff3b30' }}>
+                        <LogOut size={20} /> Salir
                     </button>
                     <button onClick={handleSave} disabled={isSaving} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: isSaving ? '#9ca3af' : 'var(--primary-gradient)' }}>
                         <Save size={20} /> {isSaving ? 'Guardando' : 'Guardar'}

@@ -1,7 +1,14 @@
+'use client';
+
 import Link from 'next/link';
-import { Monitor, Cpu, Battery, Smartphone } from 'lucide-react';
+import { Monitor, Cpu, Battery, Smartphone, LogOut } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
+    const { logout, user } = useAuth();
+
+    if (!user) return null; // Prevent UI flash before redirect
+
     const components = [
         { title: 'Pantallas LCD', icon: <Monitor size={48} />, href: '/lcd', active: true },
         { title: 'Baterías', icon: <Battery size={48} />, href: '#', active: false },
@@ -11,6 +18,16 @@ export default function Home() {
 
     return (
         <main className="home-container">
+            <div style={{ position: 'absolute', top: '24px', right: '24px' }}>
+                <button
+                    onClick={logout}
+                    className="icon-btn glass-card"
+                    style={{ padding: '12px', color: '#ff3b30', border: '1px solid rgba(255,59,48,0.2)' }}
+                    title="Cerrar Sesión"
+                >
+                    <LogOut size={20} />
+                </button>
+            </div>
             <div className="logo-container">
                 <div className="logo-glow"></div>
                 <img src="/Logo.png" alt="Full Mobile Logo" className="logo-img" />
@@ -18,7 +35,7 @@ export default function Home() {
             <header className="home-header">
                 <h1 style={{ fontSize: '3.5rem', marginBottom: '8px' }}>Full Mobile</h1>
                 <h2 style={{ fontSize: '1.8rem', marginBottom: '16px', opacity: 0.8, fontWeight: 500 }}>Control de Piezas</h2>
-                <p style={{ fontSize: '1.1rem', opacity: 0.6 }}>Gestión profesional de inventario y precios</p>
+                <p style={{ fontSize: '1.1rem', opacity: 0.6 }}>Gestión profesional de inventario y precios de {user.email}</p>
             </header>
 
             <div className="home-grid">

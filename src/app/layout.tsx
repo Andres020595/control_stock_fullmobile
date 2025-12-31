@@ -6,6 +6,8 @@ export const metadata: Metadata = {
     description: 'Gestión moderna de precios para pantallas de móviles',
 }
 
+import { AuthProvider } from '@/context/AuthContext'
+
 export default function RootLayout({
     children,
 }: {
@@ -15,7 +17,9 @@ export default function RootLayout({
         <html lang="es">
             <body>
                 <div className="harmony-bg" />
-                {children}
+                <AuthProvider>
+                    {children}
+                </AuthProvider>
             </body>
         </html>
     )
