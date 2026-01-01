@@ -100,6 +100,16 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
         setData(newData);
     };
 
+    const handleAutoSave = async (updatedData?: ScreenData[]) => {
+        if (!canEdit) return;
+        const targetData = updatedData || data;
+        try {
+            await updateScreens(targetData, user?.email || 'unknown', role || 'viewer');
+        } catch (error) {
+            console.error('Error in auto-save:', error);
+        }
+    };
+
     const handleSave = async () => {
         if (!canEdit) return;
         setIsSaving(true);
@@ -142,13 +152,14 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
     const processRows = (rows: any[]) => {
         try {
             const parsed = rows.map((row: any) => {
-                let marca = '', modelo = '', precio = 0;
+                let marca = '', modelo = '', precio = 0, stock = 0;
 
                 // Strategy 1: Header names
                 if (typeof row === 'object' && !Array.isArray(row)) {
                     marca = row.Marca || row.marca || row.MARCA || row.Brand || row.brand || '';
                     modelo = row.Modelo_LCD || row.modelo || row.Modelo || row.Model || row.model || '';
                     precio = row.Precio || row.precio || row.PRECIO || row.Price || row.price || 0;
+                    stock = row.Stock || row.stock || row.STOCK || row.Qty || row.qty || row.Quantity || row.quantity || 0;
                 }
 
                 // Strategy 2: Position Fallback
@@ -157,6 +168,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                     marca = values[0]?.toString() || '';
                     modelo = values[1]?.toString() || '';
                     precio = values[2] || 0;
+                    stock = values[3] || 0;
                 }
 
                 let rawPrecio: any = precio;
@@ -173,7 +185,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                     Marca: marca.toString().toUpperCase().trim(),
                     Modelo_LCD: modelo.toString().toUpperCase().trim(),
                     Precio: finalPrecio,
-                    Stock: 0 // Default for imports
+                    Stock: parseInt(stock.toString()) || 0
                 };
             }).filter(item => item.Marca && item.Modelo_LCD && item.Marca !== 'MARCA' && item.Marca !== 'BRAND');
 
@@ -511,6 +523,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                             style={{ width: '100%' }}
                             value={newItem.Marca}
                             onChange={(e) => setNewItem({ ...newItem, Marca: e.target.value.toUpperCase() })}
+                            placeholder="Ej: SAMSUNG"
                         />
                         <datalist id="brands">
                             {brands.map(b => <option key={b} value={b} />)}
@@ -524,6 +537,18 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                             style={{ width: '100%' }}
                             value={newItem.Modelo_LCD}
                             onChange={(e) => setNewItem({ ...newItem, Modelo_LCD: e.target.value.toUpperCase() })}
+                            placeholder="Ej: A51 OLED"
+                        />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', opacity: 0.6 }}>Precio (COP)</label>
+                        <input
+                            type="number"
+                            className="harmony-input"
+                            style={{ width: '100%' }}
+                            value={newItem.Precio === 0 ? '' : newItem.Precio}
+                            onChange={(e) => setNewItem({ ...newItem, Precio: parseFloat(e.target.value) || 0 })}
+                            placeholder="Ej: 25000"
                         />
                     </div>
                     <div style={{ flex: 1 }}>
@@ -577,6 +602,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                                             value={item.Precio}
                                             disabled={!canEdit}
                                             onChange={(e) => handlePriceChange(globalIdx, e.target.value)}
+                                            onBlur={() => handleAutoSave()}
                                             style={{ border: 'none', background: 'rgba(255,255,255,0.05)', width: '130px' }}
                                         />
                                     </td>
@@ -587,6 +613,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                                             value={item.Stock}
                                             disabled={!canEdit}
                                             onChange={(e) => handleStockChange(globalIdx, e.target.value)}
+                                            onBlur={() => handleAutoSave()}
                                             style={{
                                                 border: 'none',
                                                 background: 'rgba(255,255,255,0.05)',
