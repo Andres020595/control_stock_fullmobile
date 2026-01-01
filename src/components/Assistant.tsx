@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, Send, X, MessageSquare, User, Bot } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -95,8 +97,8 @@ export default function Assistant() {
                     position: 'fixed',
                     bottom: '100px',
                     right: '24px',
-                    width: '400px',
-                    height: '550px',
+                    width: '450px',
+                    height: '600px',
                     zIndex: 999,
                     display: 'flex',
                     flexDirection: 'column',
@@ -130,6 +132,7 @@ export default function Assistant() {
                     {/* Messages Area */}
                     <div
                         ref={scrollRef}
+                        className="assistant-messages"
                         style={{
                             flex: 1,
                             padding: '20px',
@@ -152,18 +155,24 @@ export default function Assistant() {
                                 flexDirection: 'column',
                                 alignItems: m.role === 'user' ? 'flex-end' : 'flex-start'
                             }}>
-                                <div style={{
-                                    maxWidth: '85%',
+                                <div className={`message-bubble ${m.role}`} style={{
+                                    maxWidth: m.role === 'assistant' ? '95%' : '85%',
                                     padding: '12px 16px',
                                     borderRadius: '16px',
-                                    fontSize: '0.95rem',
+                                    fontSize: '0.9rem',
                                     lineHeight: '1.4',
                                     background: m.role === 'user' ? 'var(--harmony-blue)' : 'rgba(255,255,255,0.08)',
                                     color: 'white',
                                     borderBottomRightRadius: m.role === 'user' ? '4px' : '16px',
                                     borderBottomLeftRadius: m.role === 'assistant' ? '4px' : '16px'
                                 }}>
-                                    {m.content}
+                                    {m.role === 'assistant' ? (
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            {m.content}
+                                        </ReactMarkdown>
+                                    ) : (
+                                        m.content
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -230,6 +239,30 @@ export default function Assistant() {
                 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
                 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
                 @keyframes pulse { 0%, 100% { transform: scale(0.8); opacity: 0.4; } 50% { transform: scale(1.2); opacity: 0.9; } }
+
+                .assistant-messages table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 10px 0;
+                    font-size: 0.85rem;
+                    background: rgba(255, 255, 255, 0.03);
+                    border-radius: 8px;
+                    overflow: hidden;
+                }
+                .assistant-messages th {
+                    text-align: left;
+                    padding: 8px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                }
+                .assistant-messages td {
+                    padding: 8px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                }
+                .assistant-messages p { margin: 8px 0; }
+                .assistant-messages ul, .assistant-messages ol { padding-left: 20px; margin: 8px 0; }
+                .assistant-messages li { margin: 4px 0; }
+                .assistant-messages h1, .assistant-messages h2, .assistant-messages h3 { font-size: 1.1rem; margin: 12px 0 8px 0; }
             `}</style>
         </>
     );
