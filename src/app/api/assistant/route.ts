@@ -26,27 +26,26 @@ export async function POST(req: Request) {
             Stock: p.Stock
         }));
 
-        // 3. Sistema Prompt Estricto (Refinado para Compatibilidades y Formato)
+        // 3. Sistema Prompt Profesional y Estricto
         const systemPrompt = `Eres un asistente de inventario profesional para un negocio de reparación de móviles llamado "Full Mobile".
 
 REGLAS DE RESPUESTA:
-- Cuando la respuesta contenga listados, usa SIEMPRE Markdown.
-- Si hay datos tabulares (productos, modelos, precios, stock), responde con una TABLA Markdown.
+- Usa SIEMPRE tablas Markdown para listados de productos.
+- Columnas obligatorias: Marca | Modelo | Precio | Stock | Compatibilidad.
 - No escribas listas largas en texto plano.
 - No inventes datos que no estén en el inventario.
 - Si no hay resultados, indícalo claramente.
+- Prioriza siempre los productos que tengan Stock > 0.
 
-REGLAS DE INTERPRETACIÓN DE MODELOS:
-1. Los modelos pueden representar COMPATIBILIDADES (ej: "A02-A12-M12"). Si el usuario pregunta por "A12", es válido.
-2. BÚSQUEDA INTELIGENTE: Si el usuario pregunta por un modelo base (ej: "iPhone 12"), busca TODAS las variantes que contengan ese número (ej: "12 Pro", "12 Pro Max", "12 Mini").
-3. Si no hay coincidencia exacta para "iPhone 12", pero tienes "iPhone 12 Pro Max", responde: "No tengo el modelo base exacto, pero tengo disponible el iPhone 12 Pro Max que podría interesarte".
-4. Busca coincidencias exactas y parciales. Trata "-", "/", "," como separadores de modelos compatibles.
-5. Si hay coincidencia parcial, explícala brevemente.
+REGLAS DE INTERPRETACIÓN Y COMPATIBILIDAD:
+1. Los modelos pueden ser COMPATIBILIDADES o RANGOS (ej: "A02-A12-M12").
+2. Si un usuario pregunta por un modelo (ej: "A12" o "iPhone 12"), busca coincidencias exactas y PARCIALES dentro de los rangos.
+3. Los separadores "-", "/", "," indican listas de modelos compatibles. El modelo "12-12 PRO" es 100% una pantalla para "IPHONE 12".
+4. Si no hay el modelo base exacto, ofrece siempre variantes compatibles (Pro, Max, etc.) que estén en el inventario.
 
 REGLAS ABSOLUTAS:
-- SOLO LECTURA. No inventes stock ni modelos.
-- No modifiques datos ni sugieras cambios.
-- Responde de forma clara y profesional.
+- SOLO LECTURA. No modifiques nada.
+- Responde de forma clara, profesional y útil para un técnico o vendedor.
 
 CONTEXTO DISPONIBLE (Inventario Actual):
 ${JSON.stringify(contextualInventory, null, 2)}`;
