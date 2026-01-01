@@ -1,23 +1,34 @@
 'use server';
 
-import { readDb, writeDb, ScreenData } from './db';
+import { ScreenData } from './db';
 import { revalidatePath } from 'next/cache';
 import { logAction } from './logger';
+import { getProductsFromSheet, updateProductsInSheet, addProductToSheet, SheetProduct } from './googleSheets';
 
 export async function getScreens() {
-    return await readDb();
+    return await getProductsFromSheet();
 }
 
-export async function updateScreens(data: ScreenData[], userEmail: string) {
-    await writeDb(data);
-    await logAction(userEmail, 'UPDATE_ITEMS', { count: data.length });
+export async function updateScreens(data: SheetProduct[], userEmail: string, userRole: string) {
+    if (userRole === 'viewer') throw new Error('Permission denied');
+
+    await updateProductsInSheet(data);
+    await logAction(userEmail, userRole, 'UPDATE_PRODUCTS', { count: data.length });
     revalidatePath('/lcd');
 }
 
-export async function addScreen(item: ScreenData, userEmail: string) {
-    const data = await readDb();
-    data.push(item);
-    await writeDb(data);
-    await logAction(userEmail, 'ADD_ITEM', item);
+export async function addScreen(item: SheetProduct, userEmail: string, userRole: string) {
+    if (userRole !== 'admin') throw new Error('Permission denied');
+
+    await addProductToSheet(item);
+    await logAction(userEmail, userRole, 'ADD_PRODUCT', item);
+    revalidatePath('/lcd');
+}
+
+export async function deleteScreen(data: SheetProduct[], userEmail: string, userRole: string, deletedItem: SheetProduct) {
+    if (userRole !== 'admin') throw new Error('Permission denied');
+
+    await updateProductsInSheet(data);
+    await logAction(userEmail, userRole, 'DELETE_PRODUCT', deletedItem);
     revalidatePath('/lcd');
 }

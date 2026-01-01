@@ -22,6 +22,8 @@
     "csv-stringify": "^6.5.2",
     "firebase": "^12.7.0",
     "fs-extra": "^11.2.0",
+    "google-auth-library": "^10.5.0",
+    "google-spreadsheet": "^5.0.2",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
     "lucide-react": "^0.468.0",

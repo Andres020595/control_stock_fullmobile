@@ -10,6 +10,7 @@ export interface ScreenData {
     Marca: string;
     Modelo_LCD: string;
     Precio: number;
+    Stock: number;
 }
 
 interface FileWithTime {

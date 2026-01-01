@@ -1,10 +1,11 @@
 import { db } from './firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-export async function logLogin(email: string) {
+export async function logLogin(email: string, role: string) {
     try {
         await addDoc(collection(db, 'logs'), {
             email,
+            role,
             action: 'LOGIN',
             details: 'Inicio de sesión exitoso',
             timestamp: serverTimestamp(),
@@ -14,10 +15,11 @@ export async function logLogin(email: string) {
     }
 }
 
-export async function logAction(email: string, action: string, details: any) {
+export async function logAction(email: string, role: string, action: string, details: any) {
     try {
         await addDoc(collection(db, 'logs'), {
             email,
+            role,
             action,
             details: typeof details === 'string' ? details : JSON.stringify(details),
             timestamp: serverTimestamp(),

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Search, Download, Plus, Save, ArrowLeft, Trash2, FileUp, X, Check, LogOut } from 'lucide-react';
+import { Search, Download, Plus, Save, ArrowLeft, Trash2, FileUp, X, Check, LogOut, AlertTriangle } from 'lucide-react';
 import { ScreenData } from '@/lib/db';
-import { updateScreens, addScreen } from '@/lib/actions';
+import { updateScreens, addScreen, deleteScreen } from '@/lib/actions';
 import Link from 'next/link';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -19,13 +19,18 @@ declare module 'jspdf' {
 }
 
 export default function Dashboard({ initialData }: { initialData: ScreenData[] }) {
-    const { logout, user } = useAuth();
+    const { logout, user, role } = useAuth();
     const [data, setData] = useState<ScreenData[]>(initialData);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
     const [isAdding, setIsAdding] = useState(false);
-    const [newItem, setNewItem] = useState<ScreenData>({ Marca: '', Modelo_LCD: '', Precio: 0 });
+    const [newItem, setNewItem] = useState<ScreenData>({ Marca: '', Modelo_LCD: '', Precio: 0, Stock: 0 });
     const [isSaving, setIsSaving] = useState(false);
+
+    // Permission flags
+    const canEdit = role === 'admin' || role === 'editor';
+    const canAdd = role === 'admin';
+    const canDelete = role === 'admin';
 
     if (!user) return null;
 
@@ -46,28 +51,57 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
     }, [data, searchTerm, selectedBrand]);
 
     const handlePriceChange = (index: number, value: string) => {
+        if (!canEdit) return;
         const newData = [...data];
         newData[index].Precio = parseFloat(value) || 0;
         setData(newData);
     };
 
+    const handleStockChange = (index: number, value: string) => {
+        if (!canEdit) return;
+        const newData = [...data];
+        newData[index].Stock = parseInt(value) || 0;
+        if (newData[index].Stock < 0) newData[index].Stock = 0;
+        setData(newData);
+    };
+
     const handleSave = async () => {
+        if (!canEdit) return;
         setIsSaving(true);
-        await updateScreens(data, user?.email || 'unknown');
+        try {
+            await updateScreens(data, user?.email || 'unknown', role || 'viewer');
+            alert('Base de datos actualizada con éxito');
+        } catch (error) {
+            alert('Error al guardar: ' + (error as any).message);
+        }
         setIsSaving(false);
-        alert('Precios actualizados con éxito');
     };
 
     const handleAddNew = async () => {
+        if (!canAdd) return;
         if (!newItem.Marca || !newItem.Modelo_LCD) {
             alert('Por favor complete Marca y Modelo');
             return;
         }
-        const newData = [...data, newItem];
-        setData(newData);
-        await addScreen(newItem, user?.email || 'unknown');
+        await addScreen(newItem, user?.email || 'unknown', role || 'viewer');
+        setData([...data, newItem]);
         setIsAdding(false);
-        setNewItem({ Marca: '', Modelo_LCD: '', Precio: 0 });
+        setNewItem({ Marca: '', Modelo_LCD: '', Precio: 0, Stock: 0 });
+    };
+
+    const handleDelete = async (index: number) => {
+        if (!canDelete) return;
+        if (confirm('¿Está seguro de eliminar este modelo?')) {
+            const deletedItem = data[index];
+            const newData = data.filter((_, i) => i !== index);
+            setData(newData);
+            try {
+                await deleteScreen(newData, user?.email || 'unknown', role || 'admin', deletedItem);
+            } catch (error) {
+                alert('Error al eliminar: ' + (error as any).message);
+                setData(data); // Rollback
+            }
+        }
     };
 
     const processRows = (rows: any[]) => {
@@ -103,7 +137,8 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                 return {
                     Marca: marca.toString().toUpperCase().trim(),
                     Modelo_LCD: modelo.toString().toUpperCase().trim(),
-                    Precio: finalPrecio
+                    Precio: finalPrecio,
+                    Stock: 0 // Default for imports
                 };
             }).filter(item => item.Marca && item.Modelo_LCD && item.Marca !== 'MARCA' && item.Marca !== 'BRAND');
 
@@ -162,7 +197,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
 
             const updatedData = [...data, ...newItems];
             setData(updatedData);
-            await updateScreens(updatedData, user?.email || 'unknown');
+            await updateScreens(updatedData, user?.email || 'unknown', role || 'viewer');
 
             alert(`Importación completada. Se añadieron ${newItems.length} modelos nuevos.`);
             setImportPreview(null);
@@ -206,8 +241,12 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
 
             (doc as any).autoTable({
                 startY: startY + 5,
-                head: [['Modelo', 'Precio (COP)']],
-                body: brandItems.map(i => [i.Modelo_LCD, new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(i.Precio)]),
+                head: [['Modelo', 'Precio (COP)', 'Stock']],
+                body: brandItems.map(i => [
+                    i.Modelo_LCD,
+                    new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(i.Precio),
+                    i.Stock.toString()
+                ]),
                 margin: { left: 14, right: 14 },
                 styles: { fontSize: 10, cellPadding: 4 },
                 headStyles: { fillColor: [10, 132, 255] },
@@ -278,13 +317,27 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                     <button onClick={handleExportPDF} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#34c759' }}>
                         <Download size={20} /> PDF
                     </button>
-                    <button onClick={() => setIsAdding(true)} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                        onClick={() => setIsAdding(true)}
+                        className="harmony-button"
+                        style={{ display: canAdd ? 'flex' : 'none', alignItems: 'center', gap: '8px' }}
+                    >
                         <Plus size={20} /> Nuevo
                     </button>
                     <button onClick={logout} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ff3b30' }}>
                         <LogOut size={20} /> Salir
                     </button>
-                    <button onClick={handleSave} disabled={isSaving} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: isSaving ? '#9ca3af' : 'var(--primary-gradient)' }}>
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving || !canEdit}
+                        className="harmony-button"
+                        style={{
+                            display: canEdit ? 'flex' : 'none',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: isSaving ? '#9ca3af' : 'var(--primary-gradient)'
+                        }}
+                    >
                         <Save size={20} /> {isSaving ? 'Guardando' : 'Guardar'}
                     </button>
                 </div>
@@ -431,14 +484,14 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                         />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', opacity: 0.6 }}>Precio (COP)</label>
+                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', opacity: 0.6 }}>Stock</label>
                         <input
                             type="number"
                             className="harmony-input"
                             style={{ width: '100%' }}
-                            value={newItem.Precio === 0 ? '' : newItem.Precio}
-                            onChange={(e) => setNewItem({ ...newItem, Precio: parseFloat(e.target.value) || 0 })}
-                            placeholder="Ej: 25000"
+                            value={newItem.Stock === 0 ? '' : newItem.Stock}
+                            onChange={(e) => setNewItem({ ...newItem, Stock: parseInt(e.target.value) || 0 })}
+                            placeholder="Ej: 10"
                         />
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -455,33 +508,54 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                             <th style={{ padding: '20px' }}>Marca</th>
                             <th style={{ padding: '20px' }}>Modelo LCD</th>
                             <th style={{ padding: '20px' }}>Precio (COP)</th>
-                            <th style={{ padding: '20px' }}>Acciones</th>
+                            <th style={{ padding: '20px' }}>Stock</th>
+                            <th style={{ padding: '20px', display: canDelete ? 'table-cell' : 'none' }}>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredData.map((item, idx) => {
                             const globalIdx = data.findIndex(d => d === item);
                             return (
-                                <tr key={`${item.Marca}-${item.Modelo_LCD}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
-                                    <td style={{ padding: '16px 20px', fontWeight: 600 }}>{item.Marca}</td>
+                                <tr key={`${item.Marca}-${item.Modelo_LCD}`} style={{
+                                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                                    background: item.Stock === 0 ? 'rgba(255, 59, 48, 0.15)' : (idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)')
+                                }}>
+                                    <td style={{ padding: '16px 20px', fontWeight: 600 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {item.Stock === 0 && <AlertTriangle size={16} color="#ff3b30" />}
+                                            {item.Marca}
+                                        </div>
+                                    </td>
                                     <td style={{ padding: '16px 20px' }}>{item.Modelo_LCD}</td>
                                     <td style={{ padding: '16px 20px' }}>
                                         <input
                                             type="number"
                                             className="harmony-input"
                                             value={item.Precio}
+                                            disabled={!canEdit}
                                             onChange={(e) => handlePriceChange(globalIdx, e.target.value)}
-                                            style={{ border: 'none', background: 'rgba(255,255,255,0.05)', width: '150px' }}
+                                            style={{ border: 'none', background: 'rgba(255,255,255,0.05)', width: '130px' }}
                                         />
                                     </td>
                                     <td style={{ padding: '16px 20px' }}>
-                                        <button
-                                            onClick={() => {
-                                                if (confirm('¿Está seguro de eliminar este modelo?')) {
-                                                    const newData = data.filter((_, i) => i !== globalIdx);
-                                                    setData(newData);
-                                                }
+                                        <input
+                                            type="number"
+                                            className="harmony-input"
+                                            value={item.Stock}
+                                            disabled={!canEdit}
+                                            onChange={(e) => handleStockChange(globalIdx, e.target.value)}
+                                            style={{
+                                                border: 'none',
+                                                background: 'rgba(255,255,255,0.05)',
+                                                width: '100px',
+                                                color: item.Stock === 0 ? '#ff3b30' : 'inherit',
+                                                fontWeight: item.Stock === 0 ? 'bold' : 'normal'
                                             }}
+                                        />
+                                    </td>
+                                    <td style={{ padding: '16px 20px', display: canDelete ? 'table-cell' : 'none' }}>
+                                        <button
+                                            onClick={() => handleDelete(globalIdx)}
                                             style={{ background: 'none', border: 'none', color: '#ff3b30', cursor: 'pointer' }}
                                         >
                                             <Trash2 size={18} />
