@@ -117,7 +117,7 @@ export default function LoginPage() {
             </div>
 
             <p style={{ marginTop: '24px', opacity: 0.4, fontSize: '0.8rem' }}>
-                Control de Piezas © 2024 Full Mobile
+                Control de Piezas © 2025 Full Mobile
             </p>
         </main>
     );
