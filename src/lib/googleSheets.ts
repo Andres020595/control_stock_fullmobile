@@ -1,15 +1,28 @@
+import 'server-only';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID || '';
 const GOOGLE_SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
-const GOOGLE_PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
 
-const serviceAccountAuth = new JWT({
-    email: GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: GOOGLE_PRIVATE_KEY,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+// Defensive logging to confirm environment variables exist in production
+console.log('[Sheets Debug] Env variables status:', {
+    hasKey: !!process.env.GOOGLE_PRIVATE_KEY,
+    hasEmail: !!GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    hasSheet: !!SPREADSHEET_ID,
+    hasEscapedNewlines: process.env.GOOGLE_PRIVATE_KEY?.includes('\\n'),
 });
+
+function getAuth() {
+    const rawKey = process.env.GOOGLE_PRIVATE_KEY || '';
+    const privateKey = rawKey.replace(/\\n/g, '\n');
+
+    return new JWT({
+        email: GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        key: privateKey,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+}
 
 export interface SheetProduct {
     Marca: string;
@@ -19,14 +32,15 @@ export interface SheetProduct {
 }
 
 async function getSheet() {
-    const doc = new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
+    const auth = getAuth();
+    const doc = new GoogleSpreadsheet(SPREADSHEET_ID, auth);
     await doc.loadInfo();
     return doc.sheetsByIndex[0];
 }
 
 export async function getProductsFromSheet(): Promise<SheetProduct[]> {
-    if (!SPREADSHEET_ID || !GOOGLE_SERVICE_ACCOUNT_EMAIL || !GOOGLE_PRIVATE_KEY) {
-        console.warn('Google Sheets credentials missing. Returning empty array.');
+    if (!SPREADSHEET_ID || !GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
+        console.warn('[Sheets] Credentials missing. Returning empty array.');
         return [];
     }
 
@@ -41,7 +55,7 @@ export async function getProductsFromSheet(): Promise<SheetProduct[]> {
             Stock: parseInt(row.get('Stock')) || 0,
         })).filter(p => p.Marca && p.Modelo_LCD);
     } catch (error) {
-        console.error('Error fetching products from Google Sheets:', error);
+        console.error('[Sheets] Error fetching products:', error);
         return [];
     }
 }
@@ -56,7 +70,7 @@ export async function addProductToSheet(product: SheetProduct) {
             Stock: product.Stock
         });
     } catch (error) {
-        console.error('Error adding product to Google Sheets:', error);
+        console.error('[Sheets] Error adding product:', error);
         throw error;
     }
 }
@@ -76,7 +90,7 @@ export async function updateProductsInSheet(products: SheetProduct[]) {
             Stock: p.Stock
         })));
     } catch (error) {
-        console.error('Error updating Google Sheets:', error);
+        console.error('[Sheets] Error updating Sheet:', error);
         throw error;
     }
 }
