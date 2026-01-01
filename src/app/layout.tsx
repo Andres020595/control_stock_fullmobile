@@ -7,6 +7,7 @@ export const metadata: Metadata = {
 }
 
 import { AuthProvider } from '@/context/AuthContext'
+import Assistant from '@/components/Assistant'
 
 export default function RootLayout({
     children,
@@ -19,6 +20,7 @@ export default function RootLayout({
                 <div className="harmony-bg" />
                 <AuthProvider>
                     {children}
+                    <Assistant />
                 </AuthProvider>
             </body>
         </html>
