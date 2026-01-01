@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Search, Download, Plus, Save, ArrowLeft, Trash2, FileUp, X, Check, LogOut, AlertTriangle } from 'lucide-react';
+import { Search, Download, Plus, Save, ArrowLeft, Trash2, FileUp, X, Check, LogOut, AlertTriangle, RefreshCw } from 'lucide-react';
 import { ScreenData } from '@/lib/db';
 import { updateScreens, addScreen, deleteScreen } from '@/lib/actions';
 import Link from 'next/link';
@@ -19,20 +19,55 @@ declare module 'jspdf' {
 }
 
 export default function Dashboard({ initialData }: { initialData: ScreenData[] }) {
-    const { logout, user, role } = useAuth();
+    const { logout, user, role, loading: authLoading } = useAuth();
     const [data, setData] = useState<ScreenData[]>(initialData);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
     const [isAdding, setIsAdding] = useState(false);
     const [newItem, setNewItem] = useState<ScreenData>({ Marca: '', Modelo_LCD: '', Precio: 0, Stock: 0 });
     const [isSaving, setIsSaving] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Permission flags
     const canEdit = role === 'admin' || role === 'editor';
     const canAdd = role === 'admin';
     const canDelete = role === 'admin';
 
-    if (!user) return null;
+    const fetchData = async () => {
+        setIsRefreshing(true);
+        try {
+            const response = await fetch('/api/lcd');
+            if (response.ok) {
+                const newData = await response.json();
+                setData(newData);
+            }
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+        }
+        setIsRefreshing(false);
+    };
+
+    if (authLoading || !user || !role || !data) {
+        return (
+            <div style={{
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                background: 'var(--bg-dark)',
+                color: 'white',
+                gap: '20px'
+            }}>
+                <div className="spinning" style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--harmony-blue)', borderRadius: '50%' }}></div>
+                <p style={{ opacity: 0.6, letterSpacing: '1px' }}>Cargando sistema...</p>
+                <style jsx>{`
+                    .spinning { animation: spin 1s linear infinite; }
+                    @keyframes spin { to { transform: rotate(360deg); } }
+                `}</style>
+            </div>
+        );
+    }
 
     // Import states
     const [importPreview, setImportPreview] = useState<ScreenData[] | null>(null);
@@ -313,6 +348,14 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                     />
                     <button onClick={() => fileInputRef.current?.click()} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#5856d6' }}>
                         <FileUp size={20} /> Importar Datos
+                    </button>
+                    <button
+                        onClick={fetchData}
+                        disabled={isRefreshing}
+                        className="harmony-button"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)' }}
+                    >
+                        <RefreshCw size={20} className={isRefreshing ? 'spinning' : ''} /> Refrescar
                     </button>
                     <button onClick={handleExportPDF} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#34c759' }}>
                         <Download size={20} /> PDF
