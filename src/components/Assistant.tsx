@@ -48,10 +48,11 @@ export default function Assistant() {
             });
 
             const data = await response.json();
-            if (data.reply) {
-                setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+            if (data.answer) {
+                setMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
             } else if (data.error) {
-                setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${data.error}` }]);
+                const errorMsg = data.details ? `${data.error} (${data.details})` : data.error;
+                setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${errorMsg}` }]);
             }
         } catch (error) {
             setMessages(prev => [...prev, { role: 'assistant', content: 'Lo siento, hubo un problema al conectar con el asistente.' }]);
