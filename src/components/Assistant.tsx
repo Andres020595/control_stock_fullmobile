@@ -246,19 +246,27 @@ export default function Assistant() {
                     margin: 10px 0;
                     font-size: 0.85rem;
                     background: rgba(255, 255, 255, 0.03);
-                    border-radius: 8px;
+                    border-radius: 10px;
                     overflow: hidden;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
                 }
                 .assistant-messages th {
                     text-align: left;
-                    padding: 8px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    padding: 10px;
+                    background: rgba(255, 255, 255, 0.15);
+                    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+                    border-right: 1px solid rgba(255, 255, 255, 0.1);
+                    font-weight: 600;
+                    color: var(--harmony-blue);
                 }
                 .assistant-messages td {
-                    padding: 8px;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                    padding: 10px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    border-right: 1px solid rgba(255, 255, 255, 0.05);
                 }
+                .assistant-messages tr:last-child td { border-bottom: none; }
+                .assistant-messages th:last-child, .assistant-messages td:last-child { border-right: none; }
+                .assistant-messages tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
                 .assistant-messages p { margin: 8px 0; }
                 .assistant-messages ul, .assistant-messages ol { padding-left: 20px; margin: 8px 0; }
                 .assistant-messages li { margin: 4px 0; }
