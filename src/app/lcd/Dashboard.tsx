@@ -358,28 +358,28 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                         accept=".csv, .xlsx, .xls"
                         onChange={handleFileImport}
                     />
-                    <button onClick={() => fileInputRef.current?.click()} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#5856d6' }}>
+                    <button onClick={() => fileInputRef.current?.click()} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#af52de' }}>
                         <FileUp size={20} /> Importar Datos
                     </button>
                     <button
                         onClick={fetchData}
                         disabled={isRefreshing}
                         className="harmony-button"
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ff9f0a' }}
                     >
                         <RefreshCw size={20} className={isRefreshing ? 'spinning' : ''} /> Refrescar
                     </button>
-                    <button onClick={handleExportPDF} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#34c759' }}>
+                    <button onClick={handleExportPDF} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#30d158' }}>
                         <Download size={20} /> PDF
                     </button>
                     <button
                         onClick={() => setIsAdding(true)}
                         className="harmony-button"
-                        style={{ display: canAdd ? 'flex' : 'none', alignItems: 'center', gap: '8px' }}
+                        style={{ display: canAdd ? 'flex' : 'none', alignItems: 'center', gap: '8px', background: '#64d2ff', color: '#000' }}
                     >
                         <Plus size={20} /> Nuevo
                     </button>
-                    <button onClick={logout} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ff3b30' }}>
+                    <button onClick={logout} className="harmony-button" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ff375f' }}>
                         <LogOut size={20} /> Salir
                     </button>
                     <button
@@ -390,7 +390,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
                             display: canEdit ? 'flex' : 'none',
                             alignItems: 'center',
                             gap: '8px',
-                            background: isSaving ? '#9ca3af' : 'var(--primary-gradient)'
+                            background: isSaving ? '#9ca3af' : '#007aff'
                         }}
                     >
                         <Save size={20} /> {isSaving ? 'Guardando' : 'Guardar'}
