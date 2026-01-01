@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,10 +12,14 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase safely
-const dummyConfig = { apiKey: "dummy" };
+const dummyConfig = {
+    apiKey: "dummy",
+    projectId: "dummy-project-id", // Added projectId to prevent Firestore initialization error during build
+};
 const config = firebaseConfig.apiKey ? firebaseConfig : dummyConfig;
 
 const app = getApps().length > 0 ? getApp() : initializeApp(config);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-export { auth };
+export { auth, db };

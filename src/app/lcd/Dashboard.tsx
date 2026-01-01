@@ -53,7 +53,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
 
     const handleSave = async () => {
         setIsSaving(true);
-        await updateScreens(data);
+        await updateScreens(data, user?.email || 'unknown');
         setIsSaving(false);
         alert('Precios actualizados con éxito');
     };
@@ -65,7 +65,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
         }
         const newData = [...data, newItem];
         setData(newData);
-        await addScreen(newItem);
+        await addScreen(newItem, user?.email || 'unknown');
         setIsAdding(false);
         setNewItem({ Marca: '', Modelo_LCD: '', Precio: 0 });
     };
@@ -162,7 +162,7 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
 
             const updatedData = [...data, ...newItems];
             setData(updatedData);
-            await updateScreens(updatedData);
+            await updateScreens(updatedData, user?.email || 'unknown');
 
             alert(`Importación completada. Se añadieron ${newItems.length} modelos nuevos.`);
             setImportPreview(null);
