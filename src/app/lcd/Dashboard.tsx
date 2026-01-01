@@ -47,6 +47,24 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
         setIsRefreshing(false);
     };
 
+    // Import states
+    const [importPreview, setImportPreview] = useState<ScreenData[] | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const brands = useMemo(() => {
+        if (!data) return [];
+        return Array.from(new Set(data.map(item => item.Marca))).sort();
+    }, [data]);
+
+    const filteredData = useMemo(() => {
+        if (!data) return [];
+        return data.filter(item => {
+            const matchesSearch = (item.Marca + ' ' + item.Modelo_LCD).toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesBrand = !selectedBrand || item.Marca === selectedBrand;
+            return matchesSearch && matchesBrand;
+        });
+    }, [data, searchTerm, selectedBrand]);
+
     if (authLoading || !user || !role || !data) {
         return (
             <div style={{
@@ -69,21 +87,6 @@ export default function Dashboard({ initialData }: { initialData: ScreenData[] }
         );
     }
 
-    // Import states
-    const [importPreview, setImportPreview] = useState<ScreenData[] | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const brands = useMemo(() => {
-        return Array.from(new Set(data.map(item => item.Marca))).sort();
-    }, [data]);
-
-    const filteredData = useMemo(() => {
-        return data.filter(item => {
-            const matchesSearch = (item.Marca + ' ' + item.Modelo_LCD).toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesBrand = !selectedBrand || item.Marca === selectedBrand;
-            return matchesSearch && matchesBrand;
-        });
-    }, [data, searchTerm, selectedBrand]);
 
     const handlePriceChange = (index: number, value: string) => {
         if (!canEdit) return;
