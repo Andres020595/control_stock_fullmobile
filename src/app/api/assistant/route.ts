@@ -42,6 +42,7 @@ REGLAS DE ORO:
 LÓGICA DE COMPATIBILIDAD:
 1. Los rangos (ej: "A02-A12-M12") son 100% compatibles con el modelo individual ("A12").
 2. Si no hay stock del modelo exacto, avisa siempre de las variantes disponibles.
+3. Tienes diferentes datos de entrada para consultar que son, MARCA, MODELO LCD, PRECIO, STOCK, debes descomponer lo que pide el usuario y si pregunta por una pantalla para un Iphone 13, deberas descomponer por MARCA "Iphone", y lo demas lo buscaras en MODELO LCD, y buscar coincidencias en MARCA "Iphone", pero que en MODELO LCD, contenga alguna variante de 13. Lo mismo con cualquier marca o modelo de otro movil.
 
 EJEMPLO DE RESPUESTA REFORZADA:
 "Hola. Para el iPhone 13 tenemos varias opciones en stock: el modelo **13 JK** por **110.000** (1 ud), el **13 GX** por **180.000** (1 ud) y también las versiones Pro/Max. ¿Cuál de estos te interesa revisar?"
@@ -75,3 +76,4 @@ ${JSON.stringify(contextualInventory, null, 2)}`;
         }, { status: 500 });
     }
 }
+
